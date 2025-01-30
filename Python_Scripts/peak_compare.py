@@ -107,7 +107,7 @@ def run(reference_merged_peaks: Bed,
         pseudopeaks,
         include_merged_peaks=(not unmerged)
     )
-    return metric
+    return chromosome, start, end, metric
 
 
 def main(args: argparse.Namespace, regions: list) -> None:
@@ -138,8 +138,8 @@ def main(args: argparse.Namespace, regions: list) -> None:
         )
     ]
     with Pool() as pool:
-        metrics = pool.starmap(run, run_arguments)
-    print(metrics)
+        results = pool.starmap(run, run_arguments)
+    print(results)
 
 
 if __name__ == "__main__":
