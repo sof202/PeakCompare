@@ -16,20 +16,20 @@ def list_type(arg):
             "Argument must be a comma-separated list of integers")
 
 
-def run(reference_merged_peaks,
-        reference_unmerged_peaks,
-        reference_bias_track,
-        reference_coverage_track,
-        comparison_bias_track,
-        comparison_coverage_track,
-        comparison_pvalue_track,
-        significance,
-        window_size,
-        cutoff,
-        unmerged,
-        chromosome,
-        start,
-        end) -> float:
+def run(reference_merged_peaks: Bed,
+        reference_unmerged_peaks: Bed,
+        reference_bias_track: BedGraph,
+        reference_coverage_track: BedGraph,
+        comparison_bias_track: BedGraph,
+        comparison_coverage_track: BedGraph,
+        comparison_pvalue_track: BedGraph,
+        significance: float,
+        window_size: int,
+        cutoff: float,
+        unmerged: bool,
+        chromosome: str,
+        start: int,
+        end: int) -> float:
     reference_merged_peaks = convert_narrow_peak_to_bedbase(
         reference_merged_peaks,
         chromosome,
