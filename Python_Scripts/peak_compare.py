@@ -6,6 +6,8 @@ from extract_region import extract_bedbase_region
 from label_peak_type import label_peak_type, convert_narrow_peak_to_bedbase
 from IO import BedGraph, Bed
 from multiprocessing import Pool
+import pandas as pd
+import sys
 
 
 def string_list(arg):
@@ -138,8 +140,9 @@ def main(args: argparse.Namespace, regions: list) -> None:
         )
     ]
     with Pool() as pool:
-        results = pool.starmap(run, run_arguments)
-    print(results)
+        results = pd.DataFrame(pool.starmap(run, run_arguments))
+    results.to_csv(sys.stdout, header=False, index=False,
+                   float_format='%.4f', sep="\t")
 
 
 if __name__ == "__main__":
