@@ -7,6 +7,20 @@ from label_peak_type import label_peak_type, convert_narrow_peak_to_bedbase
 from IO import BedGraph, Bed
 
 
+def list_type(arg):
+    try:
+        return [int(x) for x in arg.split(',')]
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            "Argument must be a comma-separated list of integers")
+
+
+def process_regions(args: argparse.Namespace) -> list:
+    regions = [(chromosome, start, end) for chromosome, start,
+               end in zip(args.chromosome, args.start, args.end)]
+    return regions
+
+
 def main(args: argparse.Namespace) -> None:
     chromosome = args.chromosome
     start = args.start
@@ -128,19 +142,21 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "chromosome",
-        help="The chromosome of the region you wish to inspect."
+        type=list_type,
+        help=("The chromosomes of the regions you wish to inspect. Comma "
+              "separated list.")
     )
     parser.add_argument(
         "start",
-        type=int,
-        help=("The base pair position at the start of the region you wish to "
-              "inspect")
+        type=list_type,
+        help=("The base pair positions at the start of the regions you wish "
+              "to inspect. Comma separated list.")
     )
     parser.add_argument(
         "end",
-        type=int,
-        help=("The base pair position at the end of the region you wish to "
-              "inspect")
+        type=list_type,
+        help=("The base pair positions at the end of the regions you wish to "
+              "inspect. Comma separated list")
     )
     parser.add_argument(
         "reference_merged_peaks_file",
@@ -178,4 +194,5 @@ if __name__ == "__main__":
         help="The cutoff used to call peaks in the reference dataset."
     )
     args = parser.parse_args()
+    regions = process_regions(args)
     main(args)
