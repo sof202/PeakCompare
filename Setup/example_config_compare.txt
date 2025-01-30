@@ -2,12 +2,12 @@
 # PARAMETERS #
 # ---------- #
 
-# The region that you wish to inspect. It is recommended that you pick a region
-# that is mainly characterised by peaks in your reference dataset. A larger
-# region will result in slowdown.
-CHROMOSOME=chr1
-START=500
-END=1000
+# The regions that you wish to inspect. It is recommended that you pick regions
+# that are characterised by peaks in your reference dataset, though this is not
+# a requirement. For multiple regions, supply a comma separated list.
+CHROMOSOME=chr1,chr1,chr1
+START=500,1234,9999
+END=1000,1280,12345
 
 # The cutoff that was used when peak calling with the reference dataset
 # Recall that this isn't the actual value, but the -log() value of the cutoff
