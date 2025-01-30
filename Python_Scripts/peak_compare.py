@@ -8,7 +8,11 @@ from IO import BedGraph, Bed
 from multiprocessing import Pool
 
 
-def list_type(arg):
+def string_list(arg):
+    return [x for x in arg.split(',')]
+
+
+def integer_list(arg):
     try:
         return [int(x) for x in arg.split(',')]
     except ValueError:
@@ -167,19 +171,19 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "chromosome",
-        type=list_type,
+        type=string_list,
         help=("The chromosomes of the regions you wish to inspect. Comma "
               "separated list.")
     )
     parser.add_argument(
         "start",
-        type=list_type,
+        type=integer_list,
         help=("The base pair positions at the start of the regions you wish "
               "to inspect. Comma separated list.")
     )
     parser.add_argument(
         "end",
-        type=list_type,
+        type=integer_list,
         help=("The base pair positions at the end of the regions you wish to "
               "inspect. Comma separated list")
     )
