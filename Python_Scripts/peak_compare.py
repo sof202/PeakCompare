@@ -16,12 +16,6 @@ def list_type(arg):
             "Argument must be a comma-separated list of integers")
 
 
-def process_regions(args: argparse.Namespace) -> list:
-    regions = [(chromosome, start, end) for chromosome, start,
-               end in zip(args.chromosome, args.start, args.end)]
-    return regions
-
-
 def run(reference_merged_peaks,
         reference_unmerged_peaks,
         reference_bias_track,
@@ -225,5 +219,4 @@ if __name__ == "__main__":
         help="The cutoff used to call peaks in the reference dataset."
     )
     args = parser.parse_args()
-    regions = process_regions(args)
     main(args)
