@@ -8,6 +8,6 @@ This pull request will
 - [ ] Documentation update
 
 ## Checklist:
-- [ ] My code is consistent in style with the rest of ATACPeakCompare
+- [ ] My code is consistent in style with the rest of PeakCompare
 - [ ] I have performed a self-review of my own code
 - [ ] I have made corresponding changes to the documentation
