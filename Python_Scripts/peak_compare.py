@@ -5,51 +5,75 @@ from determine_psuedo_peaks import compare_pvalue_ci, determine_psuedopeaks
 from extract_region import extract_bedbase_region
 from label_peak_type import label_peak_type, convert_narrow_peak_to_bedbase
 from IO import BedGraph, Bed
+from multiprocessing import Pool
+import pandas as pd
+import sys
 
 
-def main(args: argparse.Namespace) -> None:
-    chromosome = args.chromosome
-    start = args.start
-    end = args.end
+def string_list(arg):
+    return [x for x in arg.split(',')]
 
+
+def integer_list(arg):
+    try:
+        return [int(x) for x in arg.split(',')]
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            "Argument must be a comma-separated list of integers")
+
+
+def run(reference_merged_peaks: Bed,
+        reference_unmerged_peaks: Bed,
+        reference_bias_track: BedGraph,
+        reference_coverage_track: BedGraph,
+        comparison_bias_track: BedGraph,
+        comparison_coverage_track: BedGraph,
+        comparison_pvalue_track: BedGraph,
+        significance: float,
+        window_size: int,
+        cutoff: float,
+        unmerged: bool,
+        chromosome: str,
+        start: int,
+        end: int) -> float:
     reference_merged_peaks = convert_narrow_peak_to_bedbase(
-        Bed.read_from_file(args.reference_merged_peaks_file),
+        reference_merged_peaks,
         chromosome,
         start,
         end
     )
     reference_unmerged_peaks = convert_narrow_peak_to_bedbase(
-        Bed.read_from_file(args.reference_unmerged_peaks_file),
+        reference_unmerged_peaks,
         chromosome,
         start,
         end
     )
     reference_bias_track = extract_bedbase_region(
-        BedGraph.read_from_file(args.reference_bias_track_file),
+        reference_bias_track,
         chromosome,
         start,
         end
     )
     reference_coverage_track = extract_bedbase_region(
-        BedGraph.read_from_file(args.reference_coverage_track_file),
+        reference_coverage_track,
         chromosome,
         start,
         end
     )
     comparison_bias_track = extract_bedbase_region(
-        BedGraph.read_from_file(args.comparison_bias_track_file),
+        comparison_bias_track,
         chromosome,
         start,
         end
     )
     comparison_coverage_track = extract_bedbase_region(
-        BedGraph.read_from_file(args.comparison_coverage_track_file),
+        comparison_coverage_track,
         chromosome,
         start,
         end
     )
     comparison_pvalue_track = extract_bedbase_region(
-        BedGraph.read_from_file(args.comparison_pvalue_file),
+        comparison_pvalue_track,
         chromosome,
         start,
         end
@@ -61,14 +85,14 @@ def main(args: argparse.Namespace) -> None:
     reference_pvalue_ci = generate_pvalue_ci(
         reference_bias_track,
         reference_coverage_track,
-        args.significance,
-        args.window_size
+        significance,
+        window_size
     )
     comparison_pvalue_ci = generate_pvalue_ci(
         comparison_bias_track,
         comparison_coverage_track,
-        args.significance,
-        args.window_size
+        significance,
+        window_size
     )
     compared_pvalues = compare_pvalue_ci(
         reference_pvalue_ci,
@@ -78,31 +102,53 @@ def main(args: argparse.Namespace) -> None:
         comparison_pvalue_track,
         compared_pvalues,
         reference_labelled_peaks,
-        args.cutoff
+        cutoff
     )
     metric = calculate_metric(
         reference_labelled_peaks,
         pseudopeaks,
-        include_merged_peaks=(not args.unmerged)
+        include_merged_peaks=(not unmerged)
     )
-    if args.parsable:
-        print(metric)
-    else:
-        print("The metric for these datasets over the range ",
-              f"{start} to {end} for chromosome {chromosome} is: {metric}.")
+    return chromosome, start, end, metric
+
+
+def main(args: argparse.Namespace, regions: list) -> None:
+    reference_merged_peaks = Bed.read_from_file(
+        args.reference_merged_peaks_file)
+    reference_unmerged_peaks = Bed.read_from_file(
+        args.reference_unmerged_peaks_file)
+    reference_bias_track = BedGraph.read_from_file(
+        args.reference_bias_track_file)
+    reference_coverage_track = BedGraph.read_from_file(
+        args.reference_coverage_track_file)
+    comparison_bias_track = BedGraph.read_from_file(
+        args.comparison_bias_track_file)
+    comparison_coverage_track = BedGraph.read_from_file(
+        args.comparison_coverage_track_file)
+    comparison_pvalue_track = BedGraph.read_from_file(
+        args.comparison_pvalue_file)
+    run_arguments = [
+        (
+            reference_merged_peaks, reference_unmerged_peaks,
+            reference_bias_track, reference_coverage_track,
+            comparison_bias_track, comparison_coverage_track,
+            comparison_pvalue_track, args.significance, args.window_size,
+            args.cutoff, args.unmerged, chromosome, start, end
+        )
+        for chromosome, start, end in zip(
+            args.chromosome, args.start, args.end
+        )
+    ]
+    with Pool() as pool:
+        results = pd.DataFrame(pool.starmap(run, run_arguments))
+    results.to_csv(sys.stdout, header=False, index=False,
+                   float_format='%.4f', sep="\t")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="PeakCompare",
         description="Determine how likely a peak is to be in two datasets."
-    )
-    parser.add_argument(
-        "-p",
-        "--parsable",
-        action="store_true",
-        help=("Set this if you want the output of the script to be computer ",
-              "parsable (and not human readable).")
     )
     parser.add_argument(
         "--unmerged",
@@ -128,19 +174,21 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "chromosome",
-        help="The chromosome of the region you wish to inspect."
+        type=string_list,
+        help=("The chromosomes of the regions you wish to inspect. Comma "
+              "separated list.")
     )
     parser.add_argument(
         "start",
-        type=int,
-        help=("The base pair position at the start of the region you wish to "
-              "inspect")
+        type=integer_list,
+        help=("The base pair positions at the start of the regions you wish "
+              "to inspect. Comma separated list.")
     )
     parser.add_argument(
         "end",
-        type=int,
-        help=("The base pair position at the end of the region you wish to "
-              "inspect")
+        type=integer_list,
+        help=("The base pair positions at the end of the regions you wish to "
+              "inspect. Comma separated list")
     )
     parser.add_argument(
         "reference_merged_peaks_file",

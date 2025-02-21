@@ -47,6 +47,20 @@ chromosome of interest before passing them to `peak_compare.py`. If you plan on
 running the python script interactively (or you are writing your own wrapper
 script), consider implementing this as well.
 
+## Parallelism
+
+The python script here allows for inspecting multiple regions at once. Give
+a comma separated list of chromosomes, start bases and end bases for each 
+region you want to inspect. The order of the results may not be in the same
+order as your inputs. Because of this, the output of the script is 4 tab
+separated columns.
+
+|Chromosome|Start|End|Metric|
+|----------|-----|---|------|
+
+This is written directly to the standard output stream, so you can use basic
+linux commands to work with it (awk, grep, `>`, *etc.*).
+
 ## How the metric is calculated
 
 The metric is a simple ratio of the number of bases in psuedopeaks in the
